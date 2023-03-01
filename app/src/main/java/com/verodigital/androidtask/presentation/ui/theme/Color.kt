@@ -1,4 +1,4 @@
-package com.verodigital.androidtask.ui.theme
+package com.verodigital.androidtask.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
