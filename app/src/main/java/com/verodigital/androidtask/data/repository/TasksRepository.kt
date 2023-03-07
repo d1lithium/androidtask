@@ -10,8 +10,8 @@ import javax.inject.Inject
 class TasksRepository @Inject constructor(
     private val loginService: LoginService
 ) {
-  suspend fun getAllTasks(): Flow<getAllTasksResponse> {
-      val getAllTasksResponse = loginService.getAllTasks("")
+  suspend fun getAllTasks(authorizationHeader: String): Flow<List<Task>> {
+      val getAllTasksResponse = loginService.getAllTasks(authorizationHeader)
       return {getAllTasksResponse}.asFlow()
     }
 }
