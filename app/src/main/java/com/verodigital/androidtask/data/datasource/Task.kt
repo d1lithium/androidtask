@@ -1,4 +1,4 @@
-package com.verodigital.androidtask.data.datasource.local
+package com.verodigital.androidtask.data.datasource
 
 import com.google.gson.annotations.SerializedName
 

@@ -10,19 +10,20 @@ import javax.inject.Inject
 class LoginRepository @Inject constructor(
     private val loginService: LoginService
 ) {
-    val creds: HashMap<String,String> = HashMap()
+    val creds: HashMap<String, String> = HashMap()
     suspend fun getLoginDetails(): Flow<LoginResponse> {
-        creds.put("username","365")
-        creds.put("password","1")
+        creds.put("username", "365")
+        creds.put("password", "1")
         val getLoginResponse = loginService.login(creds)
-        return {getLoginResponse}.asFlow()
+        return { getLoginResponse }.asFlow()
     }
-    suspend fun getAccessToken():String{
+
+    suspend fun getAccessToken(): String {
         var authorizationHeader: String = ""
         getLoginDetails().collectLatest { it ->
-            authorizationHeader =  it.oauth.tokenType +" "+it.oauth.accessToken
+            authorizationHeader = it.oauth.tokenType + " " + it.oauth.accessToken
         }
-        return  authorizationHeader
+        return authorizationHeader
     }
 
 }

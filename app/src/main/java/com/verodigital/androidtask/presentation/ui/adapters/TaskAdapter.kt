@@ -1,22 +1,20 @@
 package com.verodigital.androidtask.presentation.ui.adapters
 
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import com.verodigital.androidtask.R
-import com.verodigital.androidtask.data.datasource.local.Task
+import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.util.getProgressDrawable
 
 class TaskAdapter(
     private var taskList: ArrayList<Task>,
 
-) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+    ) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
 
     fun updateTasks(

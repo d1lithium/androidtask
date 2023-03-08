@@ -1,7 +1,6 @@
 package com.verodigital.androidtask.domain
 
 import androidx.lifecycle.ViewModel
-import com.verodigital.androidtask.data.datasource.getAllTasksResponse
 import com.verodigital.androidtask.data.datasource.remote.api.LoginResponse
 import com.verodigital.androidtask.data.repository.LoginRepository
 import com.verodigital.androidtask.data.repository.TasksRepository

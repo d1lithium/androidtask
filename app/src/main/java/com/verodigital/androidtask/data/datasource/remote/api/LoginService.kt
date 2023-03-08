@@ -2,15 +2,10 @@ package com.verodigital.androidtask.data.datasource.remote.api
 
 
 
-import android.net.Credentials
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.verodigital.androidtask.data.datasource.getAllTasksResponse
-import com.verodigital.androidtask.data.datasource.local.Task
+import com.verodigital.androidtask.data.datasource.Task
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
