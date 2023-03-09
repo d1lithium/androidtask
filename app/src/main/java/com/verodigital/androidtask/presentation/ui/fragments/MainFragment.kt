@@ -62,20 +62,19 @@ class MainFragment : Fragment(R.layout.fragment_main) {
     private fun filterTaskList(query: String?) {
         var filteredTaskList: ArrayList<Tasks> = arrayListOf()
         for (i in taskList) {
-            if (i.task?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.title?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.description?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.sort?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.wageType?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.BusinessUnitKey?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.businessUnit?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.parentTaskID?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.preplanningBoardQuickSelect?.lowercase(java.util.Locale.ROOT)
-                    ?.contains(query!!)!! ||
-                i.colorCode?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
-                i.workingTime?.lowercase(java.util.Locale.ROOT)?.contains(query!!)!! ||
+            if (i.task?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.title?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.description?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.sort?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.wageType?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.BusinessUnitKey?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.businessUnit?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.parentTaskID?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.preplanningBoardQuickSelect?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.colorCode?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.workingTime?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
                 i.isAvailableInTimeTrackingKioskMode.toString()?.lowercase(java.util.Locale.ROOT)
-                    .contains(query!!)
+                    .contains(query?.lowercase()!!)
             ) {
                 filteredTaskList.add(i)
             }
