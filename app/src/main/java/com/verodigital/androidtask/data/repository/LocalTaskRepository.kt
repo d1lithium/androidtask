@@ -4,6 +4,7 @@ import android.widget.Toast
 import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.data.datasource.local.Tasks
 import com.verodigital.androidtask.data.datasource.local.TasksDao
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 
@@ -21,4 +22,6 @@ class LocalTaskRepository @Inject constructor(
 
 
    }
+    suspend fun getAllTasks() = tasksDao.getAllTasks()
+
 }
