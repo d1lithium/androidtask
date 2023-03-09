@@ -19,6 +19,7 @@ import com.verodigital.androidtask.presentation.ui.adapters.TaskAdapter
 import com.verodigital.androidtask.util.getProgressDrawable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_main.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.toList
@@ -67,12 +68,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 i.description?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
                 i.sort?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
                 i.wageType?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.BusinessUnitKey?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.BusinessUnitKey?.let { i.BusinessUnitKey!!.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!!} == true ||
                 i.businessUnit?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
                 i.parentTaskID?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.preplanningBoardQuickSelect?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.preplanningBoardQuickSelect?.let { i.preplanningBoardQuickSelect!!.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!!} == true ||
                 i.colorCode?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.workingTime?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
+                i.workingTime?.let { i.workingTime!!.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!!} == true ||
                 i.isAvailableInTimeTrackingKioskMode.toString()?.lowercase(java.util.Locale.ROOT)
                     .contains(query?.lowercase()!!)
             ) {
@@ -83,11 +84,9 @@ class MainFragment : Fragment(R.layout.fragment_main) {
 
     }
 
-    private suspend fun populateList():String {
-        taskListViewModel.getAllLocalTasks().collectLatest {
-            if (it.isNotEmpty()) {
-                populateListFromLocalDB()
-            } else {
+    private suspend fun populateList(){
+
+
                 taskListViewModel.getAllTasks().collectLatest {
 
                     //  println("localtasks--->"+localTasks.toList())
@@ -111,16 +110,15 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                         )
                     }
                 }
-                populateListFromLocalDB()
 
-            }
-        }
-    return "local"
+
+
+
 
     }
 
-    private suspend fun populateListFromLocalDB(): String {
-        for (i in 0..21) {
+    private suspend fun populateListFromLocalDB() {
+    /*    for (i in 0..21) {
             taskListViewModel.insertTask(
                 Tasks(
                     "task$i",
@@ -138,12 +136,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 )
             )
         }
+        */
         taskListViewModel.getAllLocalTasks().collectLatest {
             taskList = it
             localTaskAdapter.updateTasks(it)
         }
         v?.let { setTaskAdapter("local", it) }
-        return "local"
     }
 
     private fun setTaskAdapter(flag: String, view: View) {
