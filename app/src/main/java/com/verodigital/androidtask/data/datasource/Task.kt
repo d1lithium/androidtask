@@ -1,10 +1,14 @@
 package com.verodigital.androidtask.data.datasource
 
+import androidx.annotation.NonNull
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
+@Entity(tableName = "tasks")
 data class Task (
 
-    @SerializedName("task"                               ) var task                               : String?  = null,
+    @PrimaryKey @NonNull @SerializedName("task"          ) var task                               : String,
     @SerializedName("title"                              ) var title                              : String?  = null,
     @SerializedName("description"                        ) var description                        : String?  = null,
     @SerializedName("sort"                               ) var sort                               : String?  = null,
@@ -16,5 +20,7 @@ data class Task (
     @SerializedName("colorCode"                          ) var colorCode                          : String?  = null,
     @SerializedName("workingTime"                        ) var workingTime                        : String?  = null,
     @SerializedName("isAvailableInTimeTrackingKioskMode" ) var isAvailableInTimeTrackingKioskMode : Boolean? = null
+
+
 
 )

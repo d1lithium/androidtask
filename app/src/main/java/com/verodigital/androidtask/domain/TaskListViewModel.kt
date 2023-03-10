@@ -3,7 +3,6 @@ package com.verodigital.androidtask.domain
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import com.verodigital.androidtask.data.datasource.Task
-import com.verodigital.androidtask.data.datasource.local.Tasks
 import com.verodigital.androidtask.data.datasource.local.mSharedPreferences
 import com.verodigital.androidtask.data.repository.LocalTaskRepository
 import com.verodigital.androidtask.data.repository.LoginRepository
@@ -21,7 +20,7 @@ class TaskListViewModel @Inject constructor(
     suspend fun getAllTasks(): Flow<List<Task>> {
         return mTasksRepository.getAllTasks(mLoginRepository.getAccessToken())
     }
-    suspend fun insertTask(task: Tasks){
+    suspend fun insertTask(task: Task){
         mLocalTaskRepository.insertSingleTask(task)
     }
     suspend fun getAllLocalTasks() = mLocalTaskRepository.getAllTasks()

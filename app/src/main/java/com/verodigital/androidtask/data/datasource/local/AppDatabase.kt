@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.util.DATABASE_NAME
 
-@Database(entities = [Tasks::class], version = 1)
+@Database(entities = [Task::class], version = 1)
 @TypeConverters(Converters::class)
 abstract class AppDatabase :RoomDatabase() {
 

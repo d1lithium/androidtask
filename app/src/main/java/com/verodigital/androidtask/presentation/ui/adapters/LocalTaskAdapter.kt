@@ -9,11 +9,11 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.verodigital.androidtask.R
 import com.verodigital.androidtask.data.datasource.Task
-import com.verodigital.androidtask.data.datasource.local.Tasks
 import com.verodigital.androidtask.util.getProgressDrawable
 
+/*
 class LocalTaskAdapter(
-    private var taskList: ArrayList<Tasks>,
+    //private var taskList: ArrayList<Tasks>,
 
     ) : RecyclerView.Adapter<LocalTaskAdapter.TaskViewHolder>() {
 
@@ -60,4 +60,8 @@ class LocalTaskAdapter(
 
         }
     }
+
+
 }
+
+ */

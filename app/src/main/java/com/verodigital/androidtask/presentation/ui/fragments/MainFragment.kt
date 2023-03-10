@@ -12,13 +12,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.verodigital.androidtask.R
-import com.verodigital.androidtask.data.datasource.local.Tasks
+import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.domain.TaskListViewModel
-import com.verodigital.androidtask.presentation.ui.adapters.LocalTaskAdapter
 import com.verodigital.androidtask.presentation.ui.adapters.TaskAdapter
 import com.verodigital.androidtask.util.getProgressDrawable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_main.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
@@ -29,9 +29,10 @@ import kotlinx.coroutines.launch
 class MainFragment : Fragment(R.layout.fragment_main) {
     private val taskListViewModel: TaskListViewModel by viewModels()
     private val taskAdapter: TaskAdapter = TaskAdapter(arrayListOf())
-    private val localTaskAdapter: LocalTaskAdapter = LocalTaskAdapter(arrayListOf())
-    private var taskList: List<Tasks> = arrayListOf()
+    private var taskList: List<Task> = arrayListOf()
     private var v: View? = null
+    private var populateTaskJob0: Job? = null
+    private var populateTaskJob1: Job? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -39,13 +40,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        v = view
-        lifecycleScope.launch {
-            //populateList()
-            populateListFromLocalDB()
+        lifecycleScope.launch(Dispatchers.Main) {
+            populateList()
+           // populateListFromLocalDB()
 
         }
-        setTaskAdapter("local",v!!)
+        setTaskAdapter("remote")
         taskSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -61,7 +61,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
     }
 
     private fun filterTaskList(query: String?) {
-        var filteredTaskList: ArrayList<Tasks> = arrayListOf()
+        var filteredTaskList: ArrayList<Task> = arrayListOf()
         for (i in taskList) {
             if (i.task?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
                 i.title?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
@@ -80,20 +80,29 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 filteredTaskList.add(i)
             }
         }
-        localTaskAdapter.updateTasks(filteredTaskList)
+        taskAdapter.updateTasks(filteredTaskList)
 
     }
 
     private suspend fun populateList(){
-
+        populateTaskJob0?.cancel()
+        populateTaskJob0 = lifecycleScope.launch {
+            taskListViewModel.getAllLocalTasks().collectLatest {
+                taskList = it
+            }
+        }
+        populateTaskJob1 = lifecycleScope.launch {
+            if (taskList.isNotEmpty()){
+                taskAdapter.updateTasks(taskList)
+            }
+            else {
 
                 taskListViewModel.getAllTasks().collectLatest {
-
-                    //  println("localtasks--->"+localTasks.toList())
                     taskAdapter.updateTasks(it)
+                    taskList = it
                     for (i in it.indices) {
                         taskListViewModel.insertTask(
-                            Tasks(
+                            Task(
                                 it[i].task!!,
                                 it[i].title,
                                 it[i].description,
@@ -110,6 +119,11 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                         )
                     }
                 }
+            }
+        }
+        populateTaskJob0?.join()
+        populateTaskJob1?.join()
+
 
 
 
@@ -118,42 +132,19 @@ class MainFragment : Fragment(R.layout.fragment_main) {
     }
 
     private suspend fun populateListFromLocalDB() {
-    /*    for (i in 0..21) {
-            taskListViewModel.insertTask(
-                Tasks(
-                    "task$i",
-                    "title$i",
-                    "description$i",
-                    "sort$i",
-                    "wageType$i",
-                    "BusinessUnitKey$i",
-                    "businessUnit$i",
-                    "parentTaskID$i",
-                    "preplanningBoardQuickSelect$i",
-                    "#FF03DAC5",
-                    "workingTime$i",
-                    null
-                )
-            )
-        }
-        */
+
         taskListViewModel.getAllLocalTasks().collectLatest {
             taskList = it
-            localTaskAdapter.updateTasks(it)
+            taskAdapter.updateTasks(it)
         }
-        v?.let { setTaskAdapter("local", it) }
+       // v?.let { setTaskAdapter("local", it) }
     }
 
-    private fun setTaskAdapter(flag: String, view: View) {
-        if (flag.equals("local")) {
-            recyclerViewTask.apply {
-                layoutManager = LinearLayoutManager(view.context)
-                adapter = localTaskAdapter
-            }
-        } else if (flag.equals("remote")) {
+    private fun setTaskAdapter(flag: String) {
+        if (flag.equals("remote")) {
 
             recyclerViewTask.apply {
-                layoutManager = LinearLayoutManager(view.context)
+                layoutManager = LinearLayoutManager(context)
                 adapter = taskAdapter
 
             }

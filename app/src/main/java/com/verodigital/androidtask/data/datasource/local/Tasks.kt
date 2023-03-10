@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import org.jetbrains.annotations.NotNull
-
+/*
 @Entity(tableName = "tasks")
 data class Tasks(
     @PrimaryKey @NonNull @ColumnInfo(name = "task") var  task: String,
@@ -25,3 +25,4 @@ data class Tasks(
 
 
 }
+*/
