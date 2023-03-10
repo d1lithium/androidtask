@@ -1,8 +1,10 @@
 package com.verodigital.androidtask.presentation.ui.fragments
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
@@ -24,6 +26,7 @@ import com.verodigital.androidtask.R
 import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.domain.TaskListViewModel
 import com.verodigital.androidtask.presentation.ui.adapters.TaskAdapter
+import com.verodigital.androidtask.util.PermissionUtil
 import com.verodigital.androidtask.util.getProgressDrawable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_main.*
@@ -33,15 +36,18 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import pub.devrel.easypermissions.AppSettingsDialog
+import pub.devrel.easypermissions.EasyPermissions
 
 @AndroidEntryPoint
-class MainFragment : Fragment(R.layout.fragment_main) {
+class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.PermissionCallbacks {
     private val taskListViewModel: TaskListViewModel by viewModels()
     private val taskAdapter: TaskAdapter = TaskAdapter(arrayListOf())
     private var taskList: List<Task> = arrayListOf()
     private var v: View? = null
     private var populateTaskJob0: Job? = null
     private var populateTaskJob1: Job? = null
+    private var camPermission: Boolean = false
     val options = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(
             Barcode.FORMAT_QR_CODE,
@@ -78,7 +84,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         })
 
         qrcodeBtn.setOnClickListener(View.OnClickListener {
-            scanImg()
+           if(camPermission){
+               scanImg()
+           }else{
+               requestPermissions()
+           }
+
         })
 
     }
@@ -203,32 +214,32 @@ class MainFragment : Fragment(R.layout.fragment_main) {
 
             mScanner.process(mImg).addOnSuccessListener { qrcodes ->
 
-                    if (qrcodes.toString() == "[]") {
-                        Toast.makeText(
-                            activity, "nothing to scan",
-                            Toast.LENGTH_LONG
-                        ).show();
+                if (qrcodes.toString() == "[]") {
+                    Toast.makeText(
+                        activity, "nothing to scan",
+                        Toast.LENGTH_LONG
+                    ).show();
 
-                    }
+                }
 
 
-                    for (qrcode in qrcodes) {
-                        val qrcodeType = qrcode.valueType
-                        when (qrcodeType) {
+                for (qrcode in qrcodes) {
+                    val qrcodeType = qrcode.valueType
+                    when (qrcodeType) {
 
-                            Barcode.TYPE_TEXT -> {
-                                qrcode.rawValue?.let {
-                                    val text = qrcode.rawValue!!.toString()
-                                    taskSearchView.setQuery(text, true)
-                                }
-
+                        Barcode.TYPE_TEXT -> {
+                            qrcode.rawValue?.let {
+                                val text = qrcode.rawValue!!.toString()
+                                taskSearchView.setQuery(text, true)
                             }
 
                         }
+
                     }
-
-
                 }
+
+
+            }
                 .addOnFailureListener {
 
                     Toast.makeText(
@@ -267,6 +278,58 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         }
 
 
+    }
+
+    private fun requestPermissions() {
+        if (PermissionUtil.hasLocationPermissions(requireContext())) {
+            camPermission = true
+            scanImg()
+
+        } else {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                EasyPermissions.requestPermissions(
+                    this,
+                    "you need to accept camera permissions to use this app for QR",
+                    0,
+                    Manifest.permission.CAMERA,
+                )
+            } else {
+                EasyPermissions.requestPermissions(
+                    this,
+                    "you need to accept camera permissions to use this app for QR",
+                    0,
+                    Manifest.permission.CAMERA,
+
+                    )
+            }
+
+        }
+    }
+
+    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
+        lifecycleScope.launch {
+            camPermission = true
+            scanImg()
+
+        }
+
+    }
+
+    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
+        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
+            AppSettingsDialog.Builder(this).build().show()
+        } else {
+            requestPermissions()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
 
