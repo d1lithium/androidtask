@@ -45,7 +45,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
            // populateListFromLocalDB()
 
         }
-        setTaskAdapter("remote")
+        setTaskAdapter()
         taskSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -132,25 +132,18 @@ class MainFragment : Fragment(R.layout.fragment_main) {
     }
 
     private suspend fun populateListFromLocalDB() {
-
         taskListViewModel.getAllLocalTasks().collectLatest {
             taskList = it
             taskAdapter.updateTasks(it)
         }
-       // v?.let { setTaskAdapter("local", it) }
     }
 
-    private fun setTaskAdapter(flag: String) {
-        if (flag.equals("remote")) {
-
+    private fun setTaskAdapter() {
             recyclerViewTask.apply {
                 layoutManager = LinearLayoutManager(context)
                 adapter = taskAdapter
-
             }
-        }
     }
-
 
 }
 
