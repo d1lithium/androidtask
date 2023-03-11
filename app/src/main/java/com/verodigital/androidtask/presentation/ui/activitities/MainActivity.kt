@@ -39,6 +39,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
     val b = Bundle()
 
     override fun onCreate(savedInstanceState: Bundle?) {

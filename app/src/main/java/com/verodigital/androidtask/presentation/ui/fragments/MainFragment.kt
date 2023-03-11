@@ -20,6 +20,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.await
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -40,6 +46,7 @@ import kotlinx.coroutines.flow.toList
 import okhttp3.internal.wait
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
+import java.util.concurrent.Future
 
 @AndroidEntryPoint
 class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.PermissionCallbacks {
@@ -71,9 +78,33 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         activityContext = context
     }
 
+    override fun onResume() {
+        super.onResume()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+       var listenableFuture =  WorkManager.getInstance(activityContext!!).getWorkInfosByTag("com.verodigital.androidtask.data.worker.PeriodicTaskWorker") // ListenableFuture<List<WorkInfo>>
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Futures.addCallback(
+                listenableFuture,
+                object : FutureCallback<List<WorkInfo>> {
+                    override fun onSuccess(result: List<WorkInfo>) {
+                        lifecycleScope.launch(Dispatchers.Main){
+                            populateListFromLocalDB()
+                        }
+
+                    }
+
+                    override fun onFailure(t: Throwable) {
+                        // handle failure
+                    }
+                },
+                // causes the callbacks to be executed on the main (UI) thread
+              context?.mainExecutor
+            )
+        }
         mSwipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progress_circular)
 
