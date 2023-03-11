@@ -5,14 +5,9 @@ import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.verodigital.androidtask.BaseApplication
-import com.verodigital.androidtask.data.repository.TasksRepository
-import com.verodigital.androidtask.domain.TaskListViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-
 
 class PeriodicTaskWorker(
     private val context: Context,

@@ -33,6 +33,16 @@ class LocalTaskRepository @Inject constructor(
 
 
     }
+    suspend fun insertAllTasks(tasklist: List<Task>) {
+        try {
+            tasksDao.insertAll(tasklist)
+            println("Successfully inserted All tasks")
+        } catch (e: Exception) {
+            println(e.localizedMessage)
+        }
+
+
+    }
 
     suspend fun getAllTasks() = tasksDao.getAllTasks()
 

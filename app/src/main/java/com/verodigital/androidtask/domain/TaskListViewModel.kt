@@ -75,6 +75,9 @@ class TaskListViewModel @Inject constructor(
     suspend fun insertTask(task: Task) {
         mLocalTaskRepository.insertSingleTask(task)
     }
+    suspend fun inserAllTasks(taskList: List<Task>){
+        mLocalTaskRepository.insertAllTasks(taskList)
+    }
 
     suspend fun getAllLocalTasks() = mLocalTaskRepository.getAllTasks()
 

@@ -186,32 +186,17 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
                         progressBar?.visibility = View.GONE
                         taskList = it
                         mSwipeRefreshLayout?.isRefreshing = false
-                        for (i in it.indices) {
-                            taskListViewModel.insertTask(
-                                Task(
-                                    it[i].task!!,
-                                    it[i].title,
-                                    it[i].description,
-                                    it[i].sort,
-                                    it[i].wageType,
-                                    it[i].BusinessUnitKey,
-                                    it[i].businessUnit,
-                                    it[i].parentTaskID,
-                                    it[i].preplanningBoardQuickSelect,
-                                    it[i].colorCode,
-                                    it[i].workingTime,
-                                    it[i].isAvailableInTimeTrackingKioskMode
-                                )
-                            )
-                        }
+                        taskListViewModel.inserAllTasks(it)
+
+
                     }
                 }
+
             }
         }
 
         populateTaskJob0?.join()
         populateTaskJob1?.join()
-
 
     }
 
