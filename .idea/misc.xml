@@ -8,9 +8,12 @@
         <entry key="../../../../layout/compose-model-1678206224140.xml" value="0.25675675675675674" />
         <entry key="../../../../layout/compose-model-1678206984656.xml" value="1.0" />
         <entry key="../../../../layout/compose-model-1678207907774.xml" value="0.13302364864864866" />
+        <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1205" />
+        <entry key="app/src/main/res/drawable/ic_baseline_qr_code_scanner_24.xml" value="0.1205" />
+        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1205" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.19519927536231885" />
-        <entry key="app/src/main/res/layout/fragment_main.xml" value="0.13645833333333332" />
-        <entry key="app/src/main/res/layout/item_task.xml" value="0.17898864746093754" />
+        <entry key="app/src/main/res/layout/fragment_main.xml" value="0.14519405041710798" />
+        <entry key="app/src/main/res/layout/item_task.xml" value="0.25" />
       </map>
     </option>
   </component>

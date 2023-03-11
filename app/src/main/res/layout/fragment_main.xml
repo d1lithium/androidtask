@@ -41,6 +41,7 @@
         app:layout_constraintTop_toTopOf="@id/materialCardView"
         />
 
+
     <androidx.coordinatorlayout.widget.CoordinatorLayout
 
         android:id="@+id/clInnerLayout"
@@ -54,12 +55,21 @@
         app:layout_constraintTop_toBottomOf="@id/materialCardView"
         >
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewTask"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-        </androidx.recyclerview.widget.RecyclerView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewTask"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
@@ -69,7 +79,6 @@
 
 
     <ProgressBar
-        android:visibility="gone"
         android:id="@+id/progress_circular"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

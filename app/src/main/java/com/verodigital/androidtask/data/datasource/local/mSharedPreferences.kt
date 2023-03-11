@@ -11,8 +11,7 @@ class mSharedPreferences {
         private var editor: SharedPreferences.Editor? = null
         fun getSharedPreference(context: Context): SharedPreferences? {
             if (sharedPreferences == null) {
-                sharedPreferences =
-                    context.getSharedPreferences("Modified_on", Context.MODE_APPEND)
+                sharedPreferences = context.getSharedPreferences("VERODIGITAL-SF", Context.MODE_APPEND)
                 return sharedPreferences
             }
             return sharedPreferences

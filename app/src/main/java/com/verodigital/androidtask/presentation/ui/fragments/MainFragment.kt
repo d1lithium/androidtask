@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -18,6 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -30,12 +32,12 @@ import com.verodigital.androidtask.util.PermissionUtil
 import com.verodigital.androidtask.util.getProgressDrawable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_main.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 
@@ -44,9 +46,13 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
     private val taskListViewModel: TaskListViewModel by viewModels()
     private val taskAdapter: TaskAdapter = TaskAdapter(arrayListOf())
     private var taskList: List<Task> = arrayListOf()
-    private var v: View? = null
+
     private var populateTaskJob0: Job? = null
     private var populateTaskJob1: Job? = null
+
+    private var mSwipeRefreshLayout: SwipeRefreshLayout? = null
+    private var progressBar: ProgressBar? = null
+
     private var camPermission: Boolean = false
     val options = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(
@@ -54,23 +60,29 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
             Barcode.FORMAT_AZTEC
         )
         .build()
-
     private val REQUEST_IMAGE_CAPTURE = 1
-
     private var imgBitmap: Bitmap? = null
+
+    private var activityContext: Context? = null
+
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        activityContext = context
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        lifecycleScope.launch(Dispatchers.Main) {
-            populateList()
-            // populateListFromLocalDB()
 
+        mSwipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
+        progressBar = view.findViewById(R.id.progress_circular)
+
+        lifecycleScope.launch {
+
+            populateList()
         }
         setTaskAdapter()
+
         taskSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -84,98 +96,108 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         })
 
         qrcodeBtn.setOnClickListener(View.OnClickListener {
-           if(camPermission){
-               scanImg()
-           }else{
-               requestPermissions()
-           }
+            if (camPermission) {
+                scanImg()
+            } else {
+                requestPermissions()
+            }
 
         })
+
+        mSwipeRefreshLayout?.setOnRefreshListener {
+            lifecycleScope.launch {
+                populateList()
+            }
+
+            mSwipeRefreshLayout?.isRefreshing = false
+
+        }
 
     }
 
     private fun filterTaskList(query: String?) {
-        var filteredTaskList: ArrayList<Task> = arrayListOf()
-        for (i in taskList) {
-            if (i.task?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.title?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.description?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.sort?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.wageType?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.BusinessUnitKey?.let {
-                    i.BusinessUnitKey!!.lowercase(java.util.Locale.ROOT)
-                        ?.contains(query?.lowercase()!!)!!
-                } == true ||
-                i.businessUnit?.lowercase(java.util.Locale.ROOT)
-                    ?.contains(query?.lowercase()!!)!! ||
-                i.parentTaskID?.lowercase(java.util.Locale.ROOT)
-                    ?.contains(query?.lowercase()!!)!! ||
-                i.preplanningBoardQuickSelect?.let {
-                    i.preplanningBoardQuickSelect!!.lowercase(java.util.Locale.ROOT)
-                        ?.contains(query?.lowercase()!!)!!
-                } == true ||
-                i.colorCode?.lowercase(java.util.Locale.ROOT)?.contains(query?.lowercase()!!)!! ||
-                i.workingTime?.let {
-                    i.workingTime!!.lowercase(java.util.Locale.ROOT)
-                        ?.contains(query?.lowercase()!!)!!
-                } == true ||
-                i.isAvailableInTimeTrackingKioskMode.toString()?.lowercase(java.util.Locale.ROOT)
-                    .contains(query?.lowercase()!!)
-            ) {
-                filteredTaskList.add(i)
-            }
+        var filteredTaskList = arrayListOf<Task>()
+
+        lifecycleScope.launch(Dispatchers.Default) {
+            filteredTaskList = taskListViewModel.filterTaskList(query, taskList)
         }
-        taskAdapter.updateTasks(filteredTaskList)
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            taskAdapter.updateTasks(filteredTaskList)
+        }
+
 
     }
 
+
     private suspend fun populateList() {
         populateTaskJob0?.cancel()
-        populateTaskJob0 = lifecycleScope.launch {
+        populateTaskJob0 = lifecycleScope.launch(Dispatchers.Main) {
+            progressBar?.visibility = View.VISIBLE
             taskListViewModel.getAllLocalTasks().collectLatest {
                 taskList = it
+                // progressBar?.visibility = View.GONE
             }
         }
-        populateTaskJob1 = lifecycleScope.launch {
+
+        populateTaskJob1?.cancel()
+        populateTaskJob1 = lifecycleScope.launch(Dispatchers.Main) {
+            progressBar?.visibility = View.VISIBLE
             if (taskList.isNotEmpty()) {
                 taskAdapter.updateTasks(taskList)
+                progressBar?.visibility = View.GONE
+                mSwipeRefreshLayout?.isRefreshing = false
             } else {
 
-                taskListViewModel.getAllTasks().collectLatest {
-                    taskAdapter.updateTasks(it)
-                    taskList = it
-                    for (i in it.indices) {
-                        taskListViewModel.insertTask(
-                            Task(
-                                it[i].task!!,
-                                it[i].title,
-                                it[i].description,
-                                it[i].sort,
-                                it[i].wageType,
-                                it[i].BusinessUnitKey,
-                                it[i].businessUnit,
-                                it[i].parentTaskID,
-                                it[i].preplanningBoardQuickSelect,
-                                it[i].colorCode,
-                                it[i].workingTime,
-                                it[i].isAvailableInTimeTrackingKioskMode
+                activityContext?.let {
+                    taskListViewModel.getAllTasks(it).collectLatest {
+                        taskAdapter.updateTasks(it)
+                        progressBar?.visibility = View.GONE
+                        taskList = it
+                        mSwipeRefreshLayout?.isRefreshing = false
+                        for (i in it.indices) {
+                            taskListViewModel.insertTask(
+                                Task(
+                                    it[i].task!!,
+                                    it[i].title,
+                                    it[i].description,
+                                    it[i].sort,
+                                    it[i].wageType,
+                                    it[i].BusinessUnitKey,
+                                    it[i].businessUnit,
+                                    it[i].parentTaskID,
+                                    it[i].preplanningBoardQuickSelect,
+                                    it[i].colorCode,
+                                    it[i].workingTime,
+                                    it[i].isAvailableInTimeTrackingKioskMode
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
+
         populateTaskJob0?.join()
         populateTaskJob1?.join()
 
 
     }
 
-    private suspend fun populateListFromLocalDB() {
-        taskListViewModel.getAllLocalTasks().collectLatest {
-            taskList = it
-            taskAdapter.updateTasks(it)
+    private suspend fun populateListFromLocalDB(): Boolean {
+        var isListPopulated = false
+        populateTaskJob0?.cancel()
+        populateTaskJob0 = lifecycleScope.launch {
+            taskListViewModel.getAllLocalTasks().collectLatest {
+                taskList = it
+                if (taskList.isNotEmpty()) {
+                    taskAdapter.updateTasks(taskList)
+                    isListPopulated = true
+                }
+            }
         }
+        populateTaskJob0?.join();
+        return isListPopulated
     }
 
     private fun setTaskAdapter() {
