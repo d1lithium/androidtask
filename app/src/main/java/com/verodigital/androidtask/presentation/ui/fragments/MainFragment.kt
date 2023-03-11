@@ -36,6 +36,7 @@ import com.verodigital.androidtask.domain.TaskListViewModel
 import com.verodigital.androidtask.presentation.ui.adapters.TaskAdapter
 import com.verodigital.androidtask.util.PermissionUtil
 import com.verodigital.androidtask.util.getProgressDrawable
+import com.verodigital.androidtask.util.isNetworkAvailable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.coroutines.*
@@ -84,36 +85,48 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-       var listenableFuture =  WorkManager.getInstance(activityContext!!).getWorkInfosByTag("com.verodigital.androidtask.data.worker.PeriodicTaskWorker") // ListenableFuture<List<WorkInfo>>
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            Futures.addCallback(
-                listenableFuture,
-                object : FutureCallback<List<WorkInfo>> {
-                    override fun onSuccess(result: List<WorkInfo>) {
-                        lifecycleScope.launch(Dispatchers.Main){
-                            populateListFromLocalDB()
-                        }
-
-                    }
-
-                    override fun onFailure(t: Throwable) {
-                        // handle failure
-                    }
-                },
-                // causes the callbacks to be executed on the main (UI) thread
-              context?.mainExecutor
-            )
-        }
         mSwipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progress_circular)
+        if (isNetworkAvailable(requireContext())) {
+            var listenableFuture = WorkManager.getInstance(activityContext!!)
+                .getWorkInfosByTag("com.verodigital.androidtask.data.worker.PeriodicTaskWorker") // ListenableFuture<List<WorkInfo>>
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Futures.addCallback(
+                    listenableFuture,
+                    object : FutureCallback<List<WorkInfo>> {
+                        override fun onSuccess(result: List<WorkInfo>) {
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                populateListFromLocalDB()
+                            }
 
-        lifecycleScope.launch {
+                        }
 
-            populateList()
+                        override fun onFailure(t: Throwable) {
+                            Toast.makeText(
+                                activity, "PeriodicTaskWorker execution failed : ${t.message}",
+                                Toast.LENGTH_LONG
+                            ).show();
+                        }
+                    },
+                    // causes the callbacks to be executed on the main (UI) thread
+                    context?.mainExecutor
+                )
+            }
+
+
+            lifecycleScope.launch {
+
+                populateList()
+            }
+
+        } else {
+            progressBar?.visibility = View.GONE
+            Toast.makeText(
+                activity, "Internet not available",
+                Toast.LENGTH_LONG
+            ).show();
         }
         setTaskAdapter()
-
         taskSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -136,8 +149,17 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         })
 
         mSwipeRefreshLayout?.setOnRefreshListener {
-            lifecycleScope.launch {
-                populateList()
+            if(isNetworkAvailable(activityContext!!)) {
+                lifecycleScope.launch {
+                    populateList()
+                }
+            }
+            else{
+                progressBar?.visibility = View.GONE
+                Toast.makeText(
+                    activity, "Internet not available",
+                    Toast.LENGTH_LONG
+                ).show();
             }
 
             mSwipeRefreshLayout?.isRefreshing = false
@@ -148,13 +170,14 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
     private fun filterTaskList(query: String?) {
         var filteredTaskList = arrayListOf<Task>()
+        if (!taskList.isNullOrEmpty()) {
+            lifecycleScope.launch(Dispatchers.Default) {
+                filteredTaskList = taskListViewModel.filterTaskList(query, taskList)
+            }
 
-        lifecycleScope.launch(Dispatchers.Default) {
-            filteredTaskList = taskListViewModel.filterTaskList(query, taskList)
-        }
-
-        lifecycleScope.launch(Dispatchers.Main) {
-            taskAdapter.updateTasks(filteredTaskList)
+            lifecycleScope.launch(Dispatchers.Main) {
+                taskAdapter.updateTasks(filteredTaskList)
+            }
         }
 
 
