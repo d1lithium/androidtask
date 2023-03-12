@@ -34,6 +34,7 @@ import com.verodigital.androidtask.R
 import com.verodigital.androidtask.data.datasource.Task
 import com.verodigital.androidtask.domain.TaskListViewModel
 import com.verodigital.androidtask.presentation.ui.adapters.TaskAdapter
+import com.verodigital.androidtask.util.PeriodicTaskWorkerTag
 import com.verodigital.androidtask.util.PermissionUtil
 import com.verodigital.androidtask.util.getProgressDrawable
 import com.verodigital.androidtask.util.isNetworkAvailable
@@ -87,9 +88,10 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         super.onViewCreated(view, savedInstanceState)
         mSwipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progress_circular)
+        setTaskAdapter()
         if (isNetworkAvailable(requireContext())) {
             var listenableFuture = WorkManager.getInstance(activityContext!!)
-                .getWorkInfosByTag("com.verodigital.androidtask.data.worker.PeriodicTaskWorker") // ListenableFuture<List<WorkInfo>>
+                .getWorkInfosByTag(PeriodicTaskWorkerTag) // ListenableFuture<List<WorkInfo>>
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 Futures.addCallback(
                     listenableFuture,
@@ -115,7 +117,6 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
 
             lifecycleScope.launch {
-
                 populateList()
             }
 
@@ -126,7 +127,7 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
                 Toast.LENGTH_LONG
             ).show();
         }
-        setTaskAdapter()
+
         taskSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -185,6 +186,7 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
 
     private suspend fun populateList() {
+
         populateTaskJob0?.cancel()
         populateTaskJob0 = lifecycleScope.launch(Dispatchers.Main) {
             progressBar?.visibility = View.VISIBLE
@@ -224,6 +226,7 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
     }
 
     private suspend fun populateListFromLocalDB(): Boolean {
+
         var isListPopulated = false
         populateTaskJob0?.cancel()
         populateTaskJob0 = lifecycleScope.launch {
