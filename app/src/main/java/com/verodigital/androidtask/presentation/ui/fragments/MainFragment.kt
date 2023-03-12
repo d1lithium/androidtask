@@ -117,7 +117,10 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
 
             lifecycleScope.launch {
-                populateList()
+                //populateList()
+                if (taskAdapter.itemCount == 0) {
+                    populateListFromLocalDB()
+                }
             }
 
         } else {
@@ -150,12 +153,11 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         })
 
         mSwipeRefreshLayout?.setOnRefreshListener {
-            if(isNetworkAvailable(activityContext!!)) {
+            if (isNetworkAvailable(activityContext!!)) {
                 lifecycleScope.launch {
                     populateList()
                 }
-            }
-            else{
+            } else {
                 progressBar?.visibility = View.GONE
                 Toast.makeText(
                     activity, "Internet not available",
@@ -193,9 +195,29 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
             taskListViewModel.getAllLocalTasks().collectLatest {
                 taskList = it
                 // progressBar?.visibility = View.GONE
+                if (taskList.isNotEmpty()) {
+                    taskAdapter.updateTasks(taskList)
+                    progressBar?.visibility = View.GONE
+                    mSwipeRefreshLayout?.isRefreshing = false
+                } else {
+
+                    activityContext?.let {
+                        taskListViewModel.getAllTasks(it).collectLatest {
+                            taskAdapter.updateTasks(it)
+                            progressBar?.visibility = View.GONE
+                            taskList = it
+                            mSwipeRefreshLayout?.isRefreshing = false
+                            taskListViewModel.inserAllTasks(it)
+
+
+                        }
+                    }
+
+                }
+
             }
         }
-
+/*
         populateTaskJob1?.cancel()
         populateTaskJob1 = lifecycleScope.launch(Dispatchers.Main) {
             progressBar?.visibility = View.VISIBLE
@@ -219,9 +241,10 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
 
             }
         }
+        */
 
         populateTaskJob0?.join()
-        populateTaskJob1?.join()
+        //      populateTaskJob1?.join()
 
     }
 
@@ -230,10 +253,12 @@ class MainFragment : Fragment(R.layout.fragment_main), EasyPermissions.Permissio
         var isListPopulated = false
         populateTaskJob0?.cancel()
         populateTaskJob0 = lifecycleScope.launch {
+            progressBar?.visibility = View.VISIBLE
             taskListViewModel.getAllLocalTasks().collectLatest {
                 taskList = it
                 if (taskList.isNotEmpty()) {
                     taskAdapter.updateTasks(taskList)
+                    progressBar?.visibility = View.GONE
                     isListPopulated = true
                 }
             }
